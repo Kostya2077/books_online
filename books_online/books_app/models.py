@@ -1,12 +1,11 @@
-from django.db.models import CharField, ForeignKey, Model, CASCADE, AutoField
+from django.db.models import CharField, ForeignKey, Model, CASCADE, IntegerField
 from django.db.models import signals
 from django.dispatch import receiver
-from django.db import connection
-import json
+
 
 class Author(Model):
     name = CharField(max_length=55, db_index=True, unique=True, verbose_name="Имя")
-    books = CharField(max_length=9999, default="[]", verbose_name="Книги")
+    count_books = IntegerField(default=0, verbose_name="Количество книг")
 
     def __repr__(self):
         return self.name
@@ -40,10 +39,14 @@ class Book(Model):
 
 
 @receiver(signals.pre_save, sender=Book)
-def update_author(sender, instance, *args,**kwargs):
-    autor = Author.objects.get(id=instance.author_id)
-    data = json.loads(autor.books)
-    if instance.name not in data:
-        data.append(instance.name)
-        autor.books = json.dumps(data)
-        autor.save()
+def add_book_author(sender, instance, *args,**kwargs):
+    author = Author.objects.get(id=instance.author_id)
+    author.count_books = int(author.count_books) + 1
+    author.save()
+
+
+@receiver(signals.pre_delete, sender=Book)
+def remove_book_author(sender, instance, *args,**kwargs):
+    author = Author.objects.get(id=instance.author_id)
+    author.count_books = int(author.count_books) - 1
+    author.save()
