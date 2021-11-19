@@ -33,7 +33,7 @@ class Book(Model):
 
 
     class Meta:
-        ordering = ["name", "author"]
+        ordering = ["name"]
         verbose_name = "Книга"
         verbose_name_plural = "Книги"
 
